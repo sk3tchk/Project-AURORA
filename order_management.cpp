@@ -1,10 +1,12 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <chrono>
 #include <ctime>
 #include <string.h>
 #include <time.h>
 #include <iomanip>
+#include <conio.h>
 #include <dirent.h>
 using namespace std;
 
@@ -102,7 +104,8 @@ class start_of_day{
         systemlog.close();
         }
 };
-class inventory_management{
+class inventory_management
+{
     public:
         void list_all_items(){
             string line;
@@ -117,12 +120,11 @@ class inventory_management{
             cout << endl;
             cout << "Press Enter to return back to Inventory Management Menu!!!" << endl;
         }
-        void add_an_item(){
+       void add_an_item(){
             int id;
             string product;
-            string status="Available";
             int quantity;
-            float price, tax,tax_rate=0.165;
+            float price;
             char taxable[10];
 
             srand(time(0));
@@ -136,14 +138,7 @@ class inventory_management{
             cin >> taxable;
             cout << "Enter cost per item: $" << endl;
             cin >> price;
-            if(strcmp(taxable, "TA")){
-                tax=price*tax_rate;
-                cout << tax << endl;
-                price=price+tax;
-                cout << std::setprecision(2) << price << endl;
-            }else if(strcmp(taxable,"NT")){
-                price=price-tax;
-            }
+
             cout << endl;
             cout << endl;
             cout << "Press Enter to return back to Inventory Management Menu!!!" << endl;
@@ -155,56 +150,76 @@ class inventory_management{
             inventorylog << quantity << " ";
             inventorylog << taxable << " ";
             inventorylog << price << " ";
-            inventorylog << status << " ";
             inventorylog << "\n";
             inventorylog.close();
         }
-        /*Read the contents of the Inventory.txt*/
-        void get_inventory(){
-            string line;
-            ifstream filename ("inventory.txt");
-            if (filename.is_open()){
-                cout << "Items that are currently in Inventory: " << endl;
-                cout << "\n";
-                while (getline (filename,line)){
-                    cout << line << endl;
-                }
-                cout << "\n" ;
-                filename.close();
-            }else cout << "Unable to open systemlog.txt!!!";
-        }
+        void remove_itemv2()
+        {
+            char inventory[] = "inventory.txt";
+            char temp[] = "temp.txt";
 
+            if (rename(temp, inventory) != 0)
+                perror("\n\tError renaming file");
+            else
+                cout << "\n\tFile renamed successfully";
+                cout << "\n";
+        }
         void remove_item(){
-            int id,tempid;
+            int remove_id;
+            int id;
             string product;
             int quantity;
-            string taxable;
-            float price;
-            string status;
+            double price;
+            char taxable[10];
+            string vline;
 
-            cout << "Which item do you want to remove? ";
-            cin >> tempid;
-            ifstream file("inventory.txt");
-            while(file >> id >> product >> quantity >> taxable >> price >> status){
-                if (tempid==id){
-                    cout << "Product ID Match!!!";
-                }else{
-                    cout << "Product ID Not Found!!!";
+            ifstream xfile;
+            xfile.open("inventory.txt");
+            if (xfile.is_open())
+            {
+                cout << "Items that are currently in Inventory: " << endl;
+                cout << "\n";
+            while (getline (xfile,vline)){
+                cout << vline << endl;
+            }}
+            cout << "Which item do you want to remove: " << endl;
+            cin >> remove_id;
+            ifstream file;
+            file.open("inventory.txt");
+            ofstream temp_file;
+            temp_file.open("temp.txt");
+            file >> id;
+            file >> product;
+            file >> quantity;
+            file >> taxable;
+            file >> price;
+
+            while(!file.eof())
+            {
+                if(id!=remove_id)
+                {
+                    temp_file << id << " ";
+                    temp_file << product << " ";
+                    temp_file << quantity << " ";
+                    temp_file << taxable << " ";
+                    temp_file << price << " ";
+                    temp_file << "\n";
                 }
+                else
+                {
+                    cout << "\n\tRecord Deleted";
+                    cout << "\n";
+                }
+                file >> id;
+                file >> product;
+                file >> quantity;
+                file >> taxable;
+                file >> price;
             }
-            status = "Removed";
-            ofstream file_handler("inventory.txt",ios_base::app);
-            file_handler << id << " ";
-            file_handler << product << " ";
-            file_handler << quantity << " ";
-            file_handler << taxable <<" ";
-            file_handler << price <<" ";
-            file_handler << status <<" ";
-            file_handler << "\n";
-            file_handler.close();
+            temp_file.close();
             file.close();
+            remove("inventory.txt");
             }
-
 };
 class sales_management{
     public:
@@ -257,9 +272,97 @@ class sales_management{
         saleslog << gender << " ";
         saleslog << "\n";
         saleslog.close();
+    }
+    void create_receipt(){
+        int id_rep,id_prod,id,receiptid,salesrep;
+        string product;
+        float price, total_cost, overall_total;
+        char choice;
+        string idprod;
+        int term=0;
+
+        WaitingQueue customer(10);
+        customer.enqueue(1);
+        cout << "\n\n";
+        cout << "Current Inventory Stock: " << endl;
+        cout << "\n";
+        string iline;
+        ifstream ifilename ("inventory.txt");
+        if (ifilename.is_open()){
+            while (getline (ifilename,iline)){
+                cout << iline << endl;
+            }
+                ifilename.close();
+            }else cout << "Unable to open systemlog.txt!!!";
+        cout << "\n\n";
+        cout << "Current Sales Representatives: " << endl;
+        cout << "\n";
+        string sline;
+        ifstream sfilename ("salesreps.txt");
+        if (sfilename.is_open()){
+            while (getline (sfilename,sline)){
+                cout << sline << endl;
+            }
+                sfilename.close();
+            }else cout << "Unable to open systemlog.txt!!!";
+        srand(time(0));
+        id = rand();
+        cout << "\n" << endl;
+        cout << "Please enter the ID of Product: " << endl;
+        cin >> id_prod;
+        idprod=to_string(id_prod);
+        istringstream iss(iline);
+        //cout << idprod << endl;
+        if (idprod.compare(iline)!=0){
+            cout<<"ID Does Not Match!!!" << endl;
+        }else if (idprod.compare(iline)==0){
+            cout<<"ID Match Found!!!"<<endl;
+        }
+        cout << "Please enter the ID of Sales Represent: " << endl;
+        cin >> id_rep;
+        string xfilename = std::to_string(id);
+        ofstream receipts;
+        string abs_file_path = "C:\\C++\\receipts\\" + xfilename + ".txt";
+        receipts.open(abs_file_path);
+        do{
+        cout << "Enter product name: " << endl;
+        cin >> product;
+        cout << "Enter price for the product: " << endl;
+        cin >> price;
+        cout << "Enter total cost for product: " << endl;
+        cin>> total_cost;
+        cout << "\n";
+        cout << "Enter 0 to Continue or 1 to Quite" << endl;
+        cin >> term;
+        receipts << product << " " ;
+        receipts << price << " " ;
+        receipts << total_cost << " " ;
+        auto system_start = chrono::system_clock::now();
+        auto system_end = chrono::system_clock::now();
+        std::chrono::duration<double> elapse_second=system_end-system_start;
+        std::time_t end_time = std::chrono::system_clock::to_time_t(system_end);
+        string filename = "systemlog.txt";
+        ofstream systemlog;
+        systemlog.open(filename, ios_base::app);
+        systemlog << "Items added to receipt: " <<ctime(&end_time);
+        systemlog.close();
+        }while(term!=1);
+        receipts.close();
+
+        ++overall_total=overall_total+total_cost;
+        receiptid = id;
+        salesrep = id_rep;
+        //total = ;
+        string gfilename = "sales.txt";
+        ofstream sales;
+        sales.open(gfilename, ios_base::app);
+        sales << receiptid << " ";
+        sales << salesrep << " ";
+        sales << overall_total << " ";
+        sales.close();
 
     }
-    void display_receipts (){
+    void print_receipt(){
         string line;
         string file_name;
         cout << "\n";
@@ -297,80 +400,22 @@ class sales_management{
 
     closedir(dr);
     }
-    void create_receipt(){
-        int id_rep,id_prod, id;
-        string product;
-        float price, total_cost;
-        char choice;
-        int term=0;
 
-        WaitingQueue customer(10);
-        customer.enqueue(1);
-        cout << "\n\n";
-        cout << "Current Inventory Stock: " << endl;
-        cout << "\n";
-        string iline;
-        ifstream ifilename ("inventory.txt");
-        if (ifilename.is_open()){
-            while (getline (ifilename,iline)){
-                cout << iline << endl;
-            }
-                ifilename.close();
-            }else cout << "Unable to open systemlog.txt!!!";
-        cout << "\n\n";
-        cout << "Current Sales Representatives: " << endl;
-        cout << "\n";
-        string sline;
-        ifstream sfilename ("salesreps.txt");
-        if (sfilename.is_open()){
-            while (getline (sfilename,sline)){
-                cout << sline << endl;
-            }
-                sfilename.close();
-            }else cout << "Unable to open systemlog.txt!!!";
-        srand(time(0));
-        id = rand();
-        cout << "\n" << endl;
-        cout << "Please enter the ID of Product: " << endl;
-        cin >> id_prod;
-        cout << "Please enter the ID of Sales Represent: " << endl;
-        cin >> id_rep;
-        string xfilename = std::to_string(id);
-        ofstream receipts;
-        string abs_file_path = "C:\\C++\\receipts\\" + xfilename + ".txt";
-        receipts.open(abs_file_path);
-        do{
-        cout << "Enter product name: " << endl;
-        cin >> product;
-        cout << "Enter price for the product: " << endl;
-        cin >> price;
-        cout << "Enter total cost for product: " << endl;
-        cin>> total_cost;
-        cout << "\n";
-        cout << "Enter 0 to Continue or 1 to Quite" << endl;
-        cin >> term;
-        receipts << product << " " ;
-        receipts << price << " " ;
-        receipts << total_cost << " " ;
-        receipts << "\n";
-        auto system_start = chrono::system_clock::now();
-        auto system_end = chrono::system_clock::now();
-        std::chrono::duration<double> elapse_second=system_end-system_start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(system_end);
-        string filename = "systemlog.txt";
-        ofstream systemlog;
-        systemlog.open(filename, ios_base::app);
-        systemlog << "Items added to receipt: " <<ctime(&end_time);
-        systemlog.close();
-        }while(term!=1);
-        receipts.close();
-
-    }
-    void print_receipt(){
-    }
     void show_all_sales(){
+    string zeta;
+    string zenfile =("sales.txt");
+    ifstream salespreview;
+    salespreview.open(zenfile);
+    cout << "Please see below for sales done: " << endl;
+    cout << "\n";
+    if (salespreview.is_open())
+    {
+        while (getline (salespreview,zeta)){
+                    cout << zeta << endl;
+                }
     }
-
+    salespreview.close();
+    }
 };
 class view_system_log{
     public:
@@ -412,8 +457,6 @@ class exit_application{
         }
         }
 };
-
-
 
 int main(){
     int option;
@@ -467,8 +510,8 @@ int main(){
                                 break;
                             case 3:
                                 inventory_management removeObject;
-                                removeObject.get_inventory();
                                 removeObject.remove_item();
+                                removeObject.remove_itemv2();
                                 break;
                             case 4:
                                 goto main_menu;
@@ -505,12 +548,13 @@ int main(){
                                 receiptObject.create_receipt();
                                 break;
                             case 3:
-                                cout << "Current Receipts: " << endl;
-                                sales_management dirObject;
-                                dirObject.directory();
-                                dirObject.display_receipts();
+                                sales_management printrecObject;
+                                printrecObject.directory();
+                                printrecObject.print_receipt();
                                 break;
                             case 4:
+                                sales_management saleprevObject;
+                                saleprevObject.show_all_sales();
                                 break;
                             case 5:
                                 goto main_menu;
